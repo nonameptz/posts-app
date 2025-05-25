@@ -67,7 +67,7 @@
               <td class="px-4 py-2">
                 <input
                     type="checkbox"
-                    :aria-label="`Select post ${post.title}`"
+                    :aria-label="`Select post ${post.id}`"
                     class="form-checkbox h-4 w-4 text-blue-600"
                     :checked="isSelected(post.id)"
                     @change="toggleRow(post.id)"
@@ -105,7 +105,7 @@
                     Edit
                   </button>
                   <button
-                      @click="$emit('delete', post.id); toggleMenu(post.id);"
+                      @click="handleDelete(post.id); toggleMenu(post.id);"
                       role="menuitem"
                       class="w-full text-left px-4 py-2 hover:bg-gray-100"
                   >
@@ -121,6 +121,7 @@
     <div v-if="selected.length" class="mt-4 flex justify-end space-x-2">
       <button
           @click="clearSelection"
+          role="button"
           class="px-4 py-2 border rounded hover:bg-gray-100"
           aria-label="Clear selection"
       >
@@ -128,6 +129,7 @@
       </button>
       <button
           @click="deleteSelected"
+          role="button"
           class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
           :aria-label="`Delete ${selected.length} selected posts`"
       >
@@ -191,23 +193,31 @@ function toggleRow(id) {
     selected.value.push(id)
   }
 }
-
 function toggleMenu(id) {
   openMenuId.value = openMenuId.value === id ? null : id
+}
+function clearSelection() {
+  selected.value = []
+}
+function deleteSelected() {
+  posts.value = posts.value.filter(post => !selected.value.includes(post.id))
+  emitBulkDelete([...selected.value])
+  selected.value = []
+}
+function handleDelete(postId) {
+  emitDelete(postId);
+  posts.value = posts.value.filter(post => post.id !== postId)
+  if (openMenuId.value === postId) {
+    openMenuId.value = null
+  }
+  if (isSelected(postId)) {
+    selected.value = selected.value.filter(id => id !== postId)
+  }
 }
 
 async function fetchAll() {
   await users.fetchUsers()
   posts.value = await getPosts()
-}
-
-function clearSelection() {
-  selected.value = []
-}
-
-function deleteSelected() {
-  emitBulkDelete([...selected.value])
-  selected.value = []
 }
 
 onMounted(fetchAll)
