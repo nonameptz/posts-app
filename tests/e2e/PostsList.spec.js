@@ -97,4 +97,18 @@ test.describe('PostsList Component', () => {
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByLabel('Title')).toHaveValue('sunt aut facere repellat provident occaecati excepturi optio reprehenderit');
   });
+  test('bulk delete works', async ({ page }) => {
+    await page.locator('input[type="checkbox"][aria-label="Select post 1"]').click();
+    await expect(page.getByRole('button', { name: 'Delete 1 selected posts' })).toBeVisible();
+
+    // Mock bulk delete API calls
+    await page.route('**/api/posts/*', route => route.fulfill({ status: 200 }));
+
+    // Test confirmation dialog
+    page.on('dialog', dialog => dialog.accept());
+    await page.getByRole('button', { name: 'Delete 1 selected posts' }).click();
+
+    // Verify post is removed
+    await expect(page.getByText('sunt aut facere')).not.toBeVisible();
+  });
 });
